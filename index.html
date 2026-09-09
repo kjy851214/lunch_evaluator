@@ -47,6 +47,8 @@ textarea{width:100%;border:1px solid #dce1ea;border-radius:14px;padding:12px;mar
     <div id="best"></div>
     <div id="worst" class="small"></div>
     <textarea id="review" placeholder="오늘 급식에 대한 한 줄 평가를 써보세요."></textarea>
+    <button class="btn evaluate" onclick="submitReview()">📝 한줄평 남기기</button>
+    <div id="reviewList" class="small" style="text-align:left"></div>
   </section>
 </div>
 
@@ -97,6 +99,33 @@ function goToSchoolLunch() {
   const schoolLunchUrl = "https://geumdang.jge.hs.kr/geumdang_hs/ad/fm/foodmenu/selectFoodMenuView.do?mi=62402";
   window.open(schoolLunchUrl, "_blank");
 }
+
+function reviewKey(){
+ const d=new Date();
+ return "lunchReviews_"+d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+}
+function getReviews(){
+ try{return JSON.parse(localStorage.getItem(reviewKey()))||[]}catch(e){return []}
+}
+function renderReviews(){
+ const list=getReviews();
+ const box=document.getElementById("reviewList");
+ if(!list.length){box.innerHTML="";return}
+ const dateLabel=today();
+ box.innerHTML="<strong>오늘의 한줄평 ("+list.length+")</strong><ul style='padding-left:18px;margin:8px 0'>"
+   +list.map(t=>"<li><span style='color:#667085;font-size:12px;margin-right:6px'>["+dateLabel+"]</span>"+t.replace(/</g,"&lt;")+"</li>").join("")+"</ul>";
+}
+function submitReview(){
+ const ta=document.getElementById("review");
+ const text=ta.value.trim();
+ if(!text){alert("한줄평을 입력해주세요!");return}
+ const list=getReviews();
+ list.push(text);
+ localStorage.setItem(reviewKey(), JSON.stringify(list));
+ ta.value="";
+ renderReviews();
+}
+renderReviews();
 </script>
 </body>
 </html>
