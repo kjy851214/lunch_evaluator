@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>금당고 오늘의 급식 평가기</title>
+<style>
+*{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;background:#f5f7fb;color:#172033}
+.app{max-width:720px;margin:auto;padding:22px}
+.hero{background:linear-gradient(135deg,#182848,#4b6cb7);color:white;border-radius:24px;padding:25px;box-shadow:0 12px 30px #0002}
+h1{margin:0 0 8px;font-size:27px}.date{opacity:.85}.btn{border:0;border-radius:14px;padding:13px 18px;font-size:15px;font-weight:700;cursor:pointer}
+.primary{background:white;color:#263b68;margin-top:18px}.evaluate{width:100%;background:#182848;color:white;margin-top:16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.card{background:white;border-radius:20px;padding:18px;box-shadow:0 5px 18px #15203a12}.card h2{font-size:18px;margin:0 0 10px}.menu{line-height:1.8;min-height:76px}
+.stars{display:flex;gap:3px;margin-top:8px}.star{font-size:28px;background:none;border:0;padding:0;cursor:pointer;color:#d8dce5}.star.on{color:#ffb300}
+.result{display:none;margin-top:18px;background:white;border-radius:22px;padding:22px;text-align:center;box-shadow:0 8px 25px #15203a14}
+.score{font-size:42px;font-weight:800;margin:5px}.grade{font-size:20px;font-weight:800}
+textarea{width:100%;border:1px solid #dce1ea;border-radius:14px;padding:12px;margin-top:12px;resize:vertical;min-height:80px}
+.small{font-size:13px;color:#667085;margin-top:10px}.notice{margin-top:14px;padding:12px;border-radius:12px;background:#fff7df;font-size:13px;color:#182848}
+@media(max-width:560px){.grid{grid-template-columns:1fr}.app{padding:14px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="hero">
+    <h1>🍱 금당고 오늘의 급식 평가기</h1>
+    <div class="date" id="date"></div>
+    <button class="btn primary" onclick="goToSchoolLunch()">오늘의 급식 불러오기</button>
+    <div class="notice">버튼을 누르면 급식메뉴 페이지가 새 탭에서 열립니다. 메뉴 확인 후 아래에서 평가해보세요.</div>
+  </section>
+
+  <div class="grid">
+    <div class="card"><h2>🍚 밥</h2><div class="menu" id="rice">친환경쌀밥</div><div class="stars" data-key="rice"></div></div>
+    <div class="card"><h2>🍲 국 / 찌개</h2><div class="menu" id="soup">오늘의 국</div><div class="stars" data-key="soup"></div></div>
+    <div class="card"><h2>🍖 반찬</h2><div class="menu" id="side">메인 반찬<br>채소 반찬<br>김치</div><div class="stars" data-key="side"></div></div>
+    <div class="card"><h2>🍰 후식</h2><div class="menu" id="dessert">오늘의 후식</div><div class="stars" data-key="dessert"></div></div>
+  </div>
+
+  <button class="btn evaluate" onclick="evaluateMeal()">⭐ 오늘의 급식 평가하기</button>
+
+  <section class="result" id="result">
+    <div>오늘의 급식 점수</div>
+    <div class="score" id="score">0.0</div>
+    <div class="grade" id="grade"></div>
+    <p id="message"></p>
+    <hr>
+    <div id="best"></div>
+    <div id="worst" class="small"></div>
+    <textarea id="review" placeholder="오늘 급식에 대한 한 줄 평가를 써보세요."></textarea>
+  </section>
+</div>
+
+<script>
+const ratings={rice:0,soup:0,side:0,dessert:0};
+const names={rice:"밥",soup:"국/찌개",side:"반찬",dessert:"후식"};
+
+function today(){
+ const d=new Date(), days=["일","월","화","수","목","금","토"];
+ return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 ${days[d.getDay()]}요일`;
+}
+document.getElementById("date").textContent=today();
+
+document.querySelectorAll(".stars").forEach(box=>{
+ const key=box.dataset.key;
+ for(let i=1;i<=5;i++){
+  const b=document.createElement("button"); b.className="star"; b.textContent="★";
+  b.onclick=()=>setRating(key,i); box.appendChild(b);
+ }
+});
+function setRating(key,n){
+ ratings[key]=n;
+ const box=document.querySelector(`.stars[data-key="${key}"]`);
+ [...box.children].forEach((b,i)=>b.classList.toggle("on",i<n));
+}
+function grade(avg){
+ if(avg>=4.5)return ["S","🔥 오늘 급식 미쳤다!"];
+ if(avg>=4.0)return ["A","😋 오늘 급식 꽤 괜찮은데?"];
+ if(avg>=3.0)return ["B","🙂 무난하다. 먹자!"];
+ if(avg>=2.0)return ["C","😐 오늘은 조금 아쉽다..."];
+ return ["D","💀 오늘 급식 생존 훈련이다..."];
+}
+function evaluateMeal(){
+ const vals=Object.values(ratings);
+ if(vals.some(v=>!v)){alert("밥, 국, 반찬, 후식에 모두 별점을 주세요!");return}
+ const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+ const [g,msg]=grade(avg);
+ document.getElementById("score").textContent=avg.toFixed(1)+"점";
+ document.getElementById("grade").textContent="🏆 "+g+"등급";
+ document.getElementById("message").textContent=msg;
+ const sorted=Object.entries(ratings).sort((a,b)=>b[1]-a[1]);
+ document.getElementById("best").textContent="🏆 오늘의 급식왕 : "+names[sorted[0][0]]+" ("+sorted[0][1]+"점)";
+ document.getElementById("worst").textContent="😢 오늘의 아쉬운 메뉴 : "+names[sorted[sorted.length-1][0]]+" ("+sorted[sorted.length-1][1]+"점)";
+ document.getElementById("result").style.display="block";
+ document.getElementById("result").scrollIntoView({behavior:"smooth"});
+}
+function goToSchoolLunch() {
+  const schoolLunchUrl = "https://geumdang.jge.hs.kr/geumdang_hs/ad/fm/foodmenu/selectFoodMenuView.do?mi=62402";
+  window.open(schoolLunchUrl, "_blank");
+}
+</script>
+</body>
+</html>
